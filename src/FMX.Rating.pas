@@ -3,7 +3,8 @@ unit FMX.Rating;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math, System.Math.Vectors, FMX.Types, FMX.Controls, FMX.Graphics;
+{$IFDEF UseNativeDraw} FMX.Graphics.Native, {$ENDIF}System.SysUtils, System.Classes, System.Types, System.UITypes, System.Math, System.Math.Vectors,
+  FMX.Types, FMX.Controls, FMX.Graphics;
 
 type
   TOnRatingChange = procedure(Sender: TObject; AValue: Double) of object;
@@ -119,11 +120,11 @@ type
     property OnMouseEnter;
     property OnMouseLeave;
 
-    property StarCount: Integer read FStarCount write SetStarCount default 5;
-    property StarDistance: Double read FStarDistance write SetStarDistance;
-    property StarScale: Double read FStarScale write SetStarScale;
-    property Steps: Double read FSteps write SetSteps;
-    property Rating: Double read FRating write SetRating;
+    property StarCount: Integer read FStarCount write SetStarCount stored True nodefault;
+    property StarDistance: Double read FStarDistance write SetStarDistance stored True nodefault;
+    property StarScale: Double read FStarScale write SetStarScale stored True nodefault;
+    property Steps: Double read FSteps write SetSteps stored True nodefault;
+    property Rating: Double read FRating write SetRating stored True nodefault;
     property OnRatingChange: TOnRatingChange read FOnRatingChange write SetOnRatingChange;
     property Colors: TRatingColors read FColors write SetColors;
   end;
@@ -131,24 +132,12 @@ type
 procedure Register;
 
 const
-  StarData =
-    'M 561.735,32.327 L 689.890,303.844 L 976.452,347.384 C 1021.944,354.296 1040.108,412.75'+
-    '1 1007.190,446.302 L 799.832,657.649 L 848.783,956.075 C 856.553,1003.450 808.998,1039.'+
-    '577 768.309,1017.210 L 512.000,876.312 L 255.691,1017.210 C 215.002,1039.577 167.447,10'+
-    '03.450 175.217,956.075 L 224.168,657.649 L 16.810,446.302 C -16.108,412.751 2.056,354.2'+
-    '96 47.548,347.384 L 334.110,303.844 L 462.265,32.327 C 482.609,-10.776 541.391,-10.776 '+
-    '561.735,32.327 Z';
 
-//  'M 767.386,445.845 C 772.612,458.831 769.869,473.666 760.347,483.925 L 662.111,593.363 L' +
-//    ' 689.630,725.521 C 694.406,744.727 682.707,764.169 663.501,768.945 C 660.847,769.605 65' +
-//    '8.126,769.959 655.391,770.000 C 649.202,770.000 643.125,768.343 637.792,765.200 L 513.9' +
-//    '58,697.681 L 389.804,765.200 C 384.661,768.202 378.799,769.751 372.844,769.680 C 353.35' +
-//    '5,769.901 337.377,754.280 337.156,734.790 C 337.120,731.664 337.500,728.547 338.286,725' +
-//    '.521 L 365.805,593.363 L 267.569,483.925 C 253.931,468.970 254.999,445.790 269.953,432.' +
-//    '152 C 275.677,426.931 282.908,423.659 290.608,422.806 L 417.962,411.606 L 481.959,278.1' +
-//    '68 C 490.418,260.495 511.602,253.026 529.274,261.485 C 536.575,264.980 542.462,270.866 ' +
-//    '545.956,278.168 L 609.954,411.606 L 737.308,422.806 C 750.909,424.116 762.578,433.054 7' +
-//    '67.386,445.845 Z';
+  StarData = 'M 561.735,32.327 L 689.890,303.844 L 976.452,347.384 C 1021.944,354.296 1040.108,412.75' +
+    '1 1007.190,446.302 L 799.832,657.649 L 848.783,956.075 C 856.553,1003.450 808.998,1039.' +
+    '577 768.309,1017.210 L 512.000,876.312 L 255.691,1017.210 C 215.002,1039.577 167.447,10' +
+    '03.450 175.217,956.075 L 224.168,657.649 L 16.810,446.302 C -16.108,412.751 2.056,354.2' +
+    '96 47.548,347.384 L 334.110,303.844 L 462.265,32.327 C 482.609,-10.776 541.391,-10.776 ' + '561.735,32.327 Z';
 
 implementation
 
@@ -173,11 +162,11 @@ var
   PosX: Single;
 begin
   StarWidth := (32 * FStarScale);
-  PosX:= X;
+  PosX := X;
   if FColors.Stroke.Kind <> TBrushKind.None then
-   PosX:=PosX- (Self.Colors.Stroke.Thickness/2 *  FStarScale);
+    PosX := PosX - (Self.Colors.Stroke.Thickness / 2 * FStarScale);
 
-  StarTrunc := Trunc(PosX * 1 / (StarWidth + FStarDistance * FStarScale) ) ;
+  StarTrunc := Trunc(PosX * 1 / (StarWidth + FStarDistance * FStarScale));
 
   DistanceCount := PosX - StarTrunc * StarWidth - StarTrunc * FStarDistance * FStarScale;
 
@@ -211,7 +200,7 @@ begin
   FStarDistance := 5;
   FStarCount := 5;
   FRating := 5;
-  FSteps:=0.01;
+  FSteps := 0.01;
   FColors := TRatingColors.Create;
   FColors.OnChanged := ColorsChanged;
   FStarsPathData := TPathData.Create;
@@ -324,22 +313,28 @@ begin
     TempPathData := TPathData.Create;
     try
       TempPathData.Data := FStarsPathData.Data;
-      if FColors.Stroke.Kind <> TBrushKind.None then
-        TempPathData.Translate(FColors.Stroke.Thickness / 2 * FStarScale, FColors.Stroke.Thickness / 2 * FStarScale);
-      Canvas.BeginScene;
-      Canvas.Fill.Assign(FColors.Background);
-      Canvas.Stroke.Assign(FColors.Stroke);
-      Canvas.Stroke.Thickness := FColors.Stroke.Thickness * FStarScale;
-      if not GlobalUseGPUCanvas then
-        Canvas.DrawPath(TempPathData, Opacity);
-      Canvas.FillPath(TempPathData, Opacity);
-      Canvas.EndScene;
+{$IFDEF UseNativeDraw}Canvas.NativeDraw(TRectF.Create(0,0,self.Width, self.Height),
+        procedure
+        begin {$ENDIF}
+          if FColors.Stroke.Kind <> TBrushKind.None then
 
-      Save := Canvas.SaveState;
-      Canvas.IntersectClipRect(TRectF.Create(0, 0, TotalFill, Height));
-      Canvas.Fill.Assign(FColors.StarColor);
-      Canvas.FillPath(TempPathData, Opacity);
-      Canvas.RestoreState(Save);
+            TempPathData.Translate(FColors.Stroke.Thickness / 2 * FStarScale, FColors.Stroke.Thickness / 2 * FStarScale);
+
+          Canvas.BeginScene;
+          Canvas.Fill.Assign(FColors.Background);
+          Canvas.Stroke.Assign(FColors.Stroke);
+          Canvas.Stroke.Thickness := FColors.Stroke.Thickness * FStarScale;
+          if not GlobalUseGPUCanvas then
+            Canvas.DrawPath(TempPathData, Opacity);
+          Canvas.FillPath(TempPathData, Opacity);
+          Canvas.EndScene;
+
+          Save := Canvas.SaveState;
+          Canvas.IntersectClipRect(TRectF.Create(0, 0, TotalFill, Height));
+          Canvas.Fill.Assign(FColors.StarColor);
+          Canvas.FillPath(TempPathData, Opacity);
+          Canvas.RestoreState(Save);
+{$IFDEF UseNativeDraw} end); {$ENDIF}
     finally
       TempPathData.Free
     end;
@@ -373,7 +368,7 @@ var
 
 begin
   OldValue := FRating;
- 
+
   if ((Frac(Value) - (Trunc(Frac(Value) / FSteps) * FSteps)) > FSteps / 3) then
     NewValue := Trunc(Value) + Trunc(Frac(Value) / FSteps) * FSteps + FSteps
   else
